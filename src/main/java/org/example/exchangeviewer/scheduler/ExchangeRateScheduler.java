@@ -1,5 +1,6 @@
 package org.example.exchangeviewer.scheduler;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.exchangeviewer.domain.Currency;
@@ -28,6 +29,7 @@ public class ExchangeRateScheduler {
 
     public record ExChangeRateResponse(Map<String, Double> rates) {}
 
+    @PostConstruct
     @Scheduled(cron = "0 */5 * * * *")
     @Transactional
     public void fetchAndSaveExchangeRates() {
@@ -53,6 +55,10 @@ public class ExchangeRateScheduler {
             for (String code : targetCodes) {
                 if (rates.containsKey(code)) {
                     double inverseRate = 1 / rates.get(code);
+
+                    if ("JPY".equals(code)) {
+                        inverseRate *= 100;
+                    }
                     BigDecimal currentPrice = BigDecimal.valueOf(inverseRate);
 
                     Currency currency = currencyRepository.findByCode(code)
