@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+    # 1. PostgreSQL (관계형 데이터베이스)
+    postgres:
+        image: postgres:15-alpine
+        container_name: exchange-postgres
+        ports:
+            - "5432:5432"
+        env_file:
+            - .env # 로컬에 있는 .env 파일의 변수(DB_USER 등)를 주입
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        restart: always
+
+    # 2. Redis (인메모리 캐시)
+    redis:
+        image: redis:7-alpine
+        container_name: exchange-redis
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis-data:/data
+        restart: always
+
+    # 3. Spring Boot 백엔드 (새로 추가)
+    backend:
+        build:
+            context: . # 현재 폴더의 Dockerfile 사용
+        container_name: exchange-backend
+        ports:
+            - "8080:8080"
+        env_file:
+            - .env
+        depends_on:
+            - postgres
+            - redis
+        restart: always
+
+    # 4. React 프론트엔드 (새로 추가)
+    frontend:
+        build:
+            context: ./frontend # frontend 폴더의 Dockerfile 사용
+        container_name: exchange-frontend
+        ports:
+            - "80:80" # 브라우저에서 localhost로 바로 접속 가능하도록 80포트 개방
+        depends_on:
+            - backend
+        restart: always
+
+volumes:
+    postgres-data:
+    redis-data:
