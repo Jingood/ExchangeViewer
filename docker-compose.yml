@@ -9,6 +9,10 @@ services:
             - "5432:5432"
         env_file:
             - .env # 로컬에 있는 .env 파일의 변수(DB_USER 등)를 주입
+        environment:
+            - POSTGRES_DB=exchange_db
+            - POSTGRES_USER=${DB_USER}
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
         volumes:
             - postgres-data:/var/lib/postgresql/data
         restart: always
@@ -32,6 +36,9 @@ services:
             - "8080:8080"
         env_file:
             - .env
+        environment:
+            - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/exchange_db
+            - SPRING_DATA_REDIS_HOST=redis
         depends_on:
             - postgres
             - redis
