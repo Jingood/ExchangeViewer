@@ -77,17 +77,19 @@ function App() {
   const displayData = useMemo(() => {
     if (historyData.length === 0) return [];
 
+    const now = Date.now();
     let filtered = historyData;
-    if (timeRange === '1H') {
-      // 5분 주기이므로 1시간 = 최근 12개 데이터
-      filtered = historyData.slice(-12);
-    } else if (timeRange === '1D') {
-      // 1일 = 최대 288개 (현재 백엔드 limit이 100이므로 사실상 전체 표기)
-      filtered = historyData.slice(-288);
-    }
-    // '1M', '1Y'는 추후 백엔드 API 추가 시 분기 처리 (현재는 가진 데이터 전체 렌더링)
 
-    // 상승/하락 판별 (보여지는 그래프의 첫 점과 끝 점 기준)
+    if (timeRange === '1H') {
+      filtered = historyData.filter(d => now - d.timestamp <= 60 * 60 * 1000);
+    } else if (timeRange === '1D') {
+      filtered = historyData.filter(d => now - d.timestamp <= 24 * 60 * 60 * 1000);
+    } else if (timeRange === '1M') {
+      filtered = historyData.filter(d => now - d.timestamp <= 30 * 24 * 60 * 60 * 1000);
+    } else if (timeRange === '1Y') {
+      filtered = historyData.filter(d => now - d.timestamp <= 365 * 24 * 60 * 60 * 1000);
+    }
+
     if (filtered.length > 1) {
       const first = filtered[0].basePrice;
       const last = filtered[filtered.length - 1].basePrice;
