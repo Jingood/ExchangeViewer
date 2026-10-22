@@ -37,18 +37,17 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    # 2. EC2 서버 접속 및 배포 작업 (deploy 스텝 전체 교체)
     steps:
-      - name: Deploy to EC2
+      - name: Deploy with Zero-Downtime
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            # 1. 환경변수 파일 생성
             echo "${{ secrets.ENV_FILE }}" > .env
             
-            # 2. 프로덕션용 docker-compose.yml 생성 (빌드 대신 Docker Hub의 이미지를 Pull 받도록 설정)
             cat << 'EOF' > docker-compose.yml
             services:
               postgres:
@@ -74,18 +73,22 @@ jobs:
                   - redis-data:/data
                 restart: always
             
-              backend:
+              backend-blue:
                 image: ${{ secrets.DOCKER_USERNAME }}/exchange-backend:latest
-                container_name: exchange-backend
-                ports:
-                  - "8080:8080"
+                container_name: exchange-backend-blue
                 env_file: .env
                 environment:
                   - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/exchange_db
                   - SPRING_DATA_REDIS_HOST=redis
-                depends_on:
-                  - postgres
-                  - redis
+                restart: always
+            
+              backend-green:
+                image: ${{ secrets.DOCKER_USERNAME }}/exchange-backend:latest
+                container_name: exchange-backend-green
+                env_file: .env
+                environment:
+                  - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/exchange_db
+                  - SPRING_DATA_REDIS_HOST=redis
                 restart: always
             
               frontend:
@@ -93,8 +96,6 @@ jobs:
                 container_name: exchange-frontend
                 ports:
                   - "80:80"
-                depends_on:
-                  - backend
                 restart: always
             
             volumes:
@@ -102,7 +103,40 @@ jobs:
               redis-data:
             EOF
             
-            # 3. 최신 이미지 다운로드 및 백그라운드 무중단 실행
+            # 1. 최신 이미지 Pull
             sudo docker compose pull
-            sudo docker compose up -d
+            
+            # 2. 현재 실행 상태 확인 및 타겟 설정
+            if sudo docker ps | grep -q exchange-frontend; then
+                CURRENT_URL=$(sudo docker exec exchange-frontend cat /etc/nginx/conf.d/service-url.inc)
+                if echo "$CURRENT_URL" | grep -q "blue"; then
+                    TARGET="green"
+                    CURRENT="blue"
+                else
+                    TARGET="blue"
+                    CURRENT="green"
+                fi
+                echo "현재 $CURRENT 실행 중. $TARGET 배포 시작."
+            else
+                echo "초기 구동. blue 배포 시작."
+                TARGET="blue"
+                CURRENT="none"
+            fi
+            
+            # 3. 공통 인프라 및 타겟 백엔드 컨테이너 띄우기
+            sudo docker compose up -d postgres redis frontend backend-$TARGET
+            
+            # 4. Spring Boot 부팅 대기 (t2.micro 스왑 메모리 환경을 감안하여 20초 대기)
+            echo "20초 동안 $TARGET 백엔드 헬스 체크 대기..."
+            sleep 20
+            
+            # 5. Nginx 트래픽 무중단 스위칭 (Nginx 재시작 없이 설정만 Reload)
+            sudo docker exec exchange-frontend sh -c "echo 'set \$service_url http://exchange-backend-${TARGET}:8080;' > /etc/nginx/conf.d/service-url.inc"
+            sudo docker exec exchange-frontend nginx -s reload
+            
+            # 6. 이전 버전(구버전) 컨테이너 폭파 및 잉여 이미지 청소
+            if [ "$CURRENT" != "none" ]; then
+                sudo docker compose stop backend-$CURRENT
+                sudo docker compose rm -f backend-$CURRENT
+            fi
             sudo docker image prune -f

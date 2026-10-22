@@ -19,6 +19,9 @@ FROM nginx:alpine
 
 # Nginx의 기본 HTML 서빙 폴더에 Vite 빌드 결과물(dist) 복사
 COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+RUN echo 'set $service_url http://exchange-backend-blue:8080;' > /etc/nginx/conf.d/service-url.inc
 
 # Nginx가 80 포트로 백그라운드에서 실행되도록 설정
 EXPOSE 80

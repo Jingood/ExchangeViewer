@@ -21,7 +21,7 @@ function App() {
 
   const [isUp, setIsUp] = useState(true);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1/exchange-rates';
+  const API_BASE_URL = '/api/v1/exchange-rates';
 
   // 1. 최신 환율 폴링 (메인 카드용)
   useEffect(() => {
