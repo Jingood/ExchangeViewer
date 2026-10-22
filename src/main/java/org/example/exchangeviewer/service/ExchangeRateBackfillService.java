@@ -46,7 +46,8 @@ public class ExchangeRateBackfillService {
                     }
                 }
 
-                String sql = "INSERT INTO exchange_rate_history (currency_id, base_price, created_at) VALUES (?, ?, CAST(? AS TIMESTAMP))";
+                String sql = "INSERT INTO exchange_rate_history (currency_id, base_price, created_at) " +
+                        "VALUES ((SELECT id FROM currency WHERE code = ?), ?, CAST(? AS TIMESTAMP))";
                 jdbcTemplate.batchUpdate(sql, batchArgs);
                 totalInserted += batchArgs.size();
             }
