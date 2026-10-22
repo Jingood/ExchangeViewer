@@ -30,6 +30,8 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/exchange-frontend:latest
+          build-args: |
+            VITE_API_URL=http://${{ secrets.EC2_HOST }}:8080/api/v1/exchange-rates
 
   # 2. EC2 서버 접속 및 배포 작업
   deploy:

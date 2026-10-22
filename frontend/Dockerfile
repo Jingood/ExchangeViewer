@@ -2,6 +2,10 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+
 # 패키지 정보 복사 및 의존성 설치
 COPY package*.json ./
 RUN npm ci
