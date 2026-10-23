@@ -108,10 +108,9 @@ function App() {
         return {
           basePrice: avgPrice,
           timestamp: grouped[key].timestamp,
-          // 1개월은 MM/DD, 1년은 YY/MM 포맷
           displayLabel: timeRange === '1M'
               ? `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
-              : `${String(date.getFullYear()).slice(2)}/${String(date.getMonth() + 1).padStart(2, '0')}`
+              : `${String(date.getFullYear()).slice(2)}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
         };
       });
     }
