@@ -7,6 +7,7 @@ import org.example.exchangeviewer.domain.Currency;
 import org.example.exchangeviewer.domain.ExchangeRateHistory;
 import org.example.exchangeviewer.repository.CurrencyRepository;
 import org.example.exchangeviewer.repository.ExchangeRateHistoryRepository;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,7 @@ public class ExchangeRateScheduler {
     public record ExChangeRateResponse(Map<String, Double> rates) {}
 
     @PostConstruct
+    @CacheEvict(value = "exchangeHistory", allEntries = true)
     @Scheduled(cron = "0 */5 * * * *")
     @Transactional
     public void fetchAndSaveExchangeRates() {

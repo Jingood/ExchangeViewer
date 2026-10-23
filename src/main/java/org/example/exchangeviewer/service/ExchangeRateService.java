@@ -7,6 +7,7 @@ import org.example.exchangeviewer.domain.ExchangeRateHistory;
 import org.example.exchangeviewer.dto.HistoryRateResponse;
 import org.example.exchangeviewer.repository.CurrencyRepository;
 import org.example.exchangeviewer.repository.ExchangeRateHistoryRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class ExchangeRateService {
     }
 
     // 2. 과거 환율 기록
+    @Cacheable(value = "exchangeHistory", key = "#code")
     @Transactional(readOnly = true)
     public List<HistoryRateResponse> getHistoryRates(String code) {
         Currency currency = currencyRepository.findByCode(code)
