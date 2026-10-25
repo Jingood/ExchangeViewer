@@ -32,10 +32,8 @@ public class ExchangeRateController {
 
     @Operation(summary = "특정 통화 환율 기록 조회", description = "차트 렌더링을 위해 특정 통화(예: USD)의 최근 100건 기록을 반환합니다.")
     @GetMapping("/history/{code}")
-    public ResponseEntity<List<HistoryRateResponse>> getHistoryRates(
-            @Parameter(description = "통화 코드 (ex: USD, EUR)", example = "USD")
-            @PathVariable String code) {
-        return ResponseEntity.ok(exchangeRateService.getHistoryRates(code));
+    public List<HistoryRateResponse> getHistoryRates(@PathVariable String code) {
+        return exchangeRateService.getHistoryRates(code).getRates();
     }
 
     @Operation(summary = "5년 치 과거 환율 데이터 마이그레이션", description = "Frankfurter API를 호출하여 과거 5년 치 일별 환율 데이터를 DB에 일괄 적재(Backfill)합니다. (최초 1회만 실행 권장)")

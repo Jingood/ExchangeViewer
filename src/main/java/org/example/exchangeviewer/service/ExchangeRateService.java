@@ -4,6 +4,7 @@ package org.example.exchangeviewer.service;
 import lombok.RequiredArgsConstructor;
 import org.example.exchangeviewer.domain.Currency;
 import org.example.exchangeviewer.domain.ExchangeRateHistory;
+import org.example.exchangeviewer.dto.HistoryRateListResponse;
 import org.example.exchangeviewer.dto.HistoryRateResponse;
 import org.example.exchangeviewer.repository.CurrencyRepository;
 import org.example.exchangeviewer.repository.ExchangeRateHistoryRepository;
@@ -32,7 +33,7 @@ public class ExchangeRateService {
     // 2. 과거 환율 기록
     @Cacheable(value = "exchangeHistory", key = "#code")
     @Transactional(readOnly = true)
-    public List<HistoryRateResponse> getHistoryRates(String code) {
+    public HistoryRateListResponse getHistoryRates(String code) {
         Currency currency = currencyRepository.findByCode(code)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid currency code"));
 
@@ -41,6 +42,8 @@ public class ExchangeRateService {
         List<ExchangeRateHistory> history = historyRepository
                 .findByCurrencyAndCreatedAtAfterOrderByCreatedAtDesc(currency, oneYearAgo);
 
-        return history.stream().map(HistoryRateResponse::new).toList();
+        List<HistoryRateResponse> list = history.stream().map(HistoryRateResponse::new).toList();
+
+        return new HistoryRateListResponse(list);
     }
 }

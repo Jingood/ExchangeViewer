@@ -1,9 +1,10 @@
 package org.example.exchangeviewer.dto;
 
-import org.example.exchangeviewer.domain.ExchangeRateHistory;
 
+import org.example.exchangeviewer.domain.ExchangeRateHistory;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
 
 public record HistoryRateResponse(
         String basePrice,
