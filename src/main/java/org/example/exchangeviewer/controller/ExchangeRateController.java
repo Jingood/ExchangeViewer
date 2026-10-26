@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.example.exchangeviewer.dto.ChartDataResponse;
 import org.example.exchangeviewer.dto.HistoryRateResponse;
 import org.example.exchangeviewer.service.ExchangeRateBackfillService;
 import org.example.exchangeviewer.service.ExchangeRateService;
@@ -32,8 +33,11 @@ public class ExchangeRateController {
 
     @Operation(summary = "특정 통화 환율 기록 조회", description = "차트 렌더링을 위해 특정 통화(예: USD)의 최근 100건 기록을 반환합니다.")
     @GetMapping("/history/{code}")
-    public List<HistoryRateResponse> getHistoryRates(@PathVariable String code) {
-        return exchangeRateService.getHistoryRates(code).getRates();
+    public List<ChartDataResponse> getHistoryRates(
+            @PathVariable String code,
+            @RequestParam(defaultValue = "1D") String range
+    ) {
+        return exchangeRateService.getChartData(code, range).getRates();
     }
 
     @Operation(summary = "5년 치 과거 환율 데이터 마이그레이션", description = "Frankfurter API를 호출하여 과거 5년 치 일별 환율 데이터를 DB에 일괄 적재(Backfill)합니다. (최초 1회만 실행 권장)")
