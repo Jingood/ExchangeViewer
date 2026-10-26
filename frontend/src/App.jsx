@@ -9,7 +9,7 @@ function App() {
   const [historyData, setHistoryData] = useState([]); // 서버에서 연산이 끝난 30~365건의 가벼운 데이터
   const [isUp, setIsUp] = useState(true);
 
-  const API_BASE_URL = '/api/v1/exchange-rates';
+  const API_BASE_URL = 'https://exchangeviewer.shop/api/v1/exchange-rates';
 
   useEffect(() => {
     const fetchLatestRates = async () => {
